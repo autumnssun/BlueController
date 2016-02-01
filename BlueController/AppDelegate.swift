@@ -12,10 +12,19 @@ import UIKit
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-
-
+    
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
+        application.setStatusBarHidden(true, withAnimation: UIStatusBarAnimation.Fade)
+        
+        DDLog.addLogger(DDTTYLogger.sharedInstance()) // TTY = Xcode console
+        DDLog.addLogger(DDASLLogger.sharedInstance()) // ASL = Apple System Logs
+        
+        let fileLogger: DDFileLogger = DDFileLogger() // File Logger
+        fileLogger.rollingFrequency = 60*60*24  // 24 hours
+        fileLogger.logFileManager.maximumNumberOfLogFiles = 7
+        DDLog.addLogger(fileLogger)
+
         return true
     }
 
