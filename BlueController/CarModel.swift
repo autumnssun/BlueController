@@ -5,8 +5,9 @@
 //  Created by Tran Khoa on 31/01/2016.
 //  Copyright © 2016 Tran Khoa. All rights reserved.
 //
+import Foundation
 
-class CarModel: NSObject {
+class CarModel:NSObject {
     var driveDir:drivingDirection = .forward
     var MASpeed:Int=0
     var MBSpeed:Int=0
@@ -34,7 +35,7 @@ class CarModel: NSObject {
         delegate?.carDirectionDidChange(driveDir)
     }
     
-    func setRotation(rot:Double){
+    func setRotation(_ rot:Double){
         steeringAngle=rot
         drive()
     }
@@ -47,11 +48,11 @@ class CarModel: NSObject {
             dir = 1
         }
         print(steeringAngle)
-        if(M_PI>steeringAngle && steeringAngle>0){
+        if(Double.pi>steeringAngle && steeringAngle>0){
             angle=steeringAngle
 
-        }else if(M_PI*2>steeringAngle && steeringAngle>M_PI){
-            angle=steeringAngle-M_PI*2
+        }else if(Double.pi*2>steeringAngle && steeringAngle>Double.pi){
+            angle=steeringAngle-Double.pi*2
         }
         else{
             stop()
@@ -67,7 +68,7 @@ class CarModel: NSObject {
         //Adjusting speed
         var ar=[MASpeed,MBSpeed,MCSpeed,MDSpeed]
 
-        for (var i = 0; i<4;i++) {
+        for i in 0...3 {
             if(ar[i]>255){
                 ar[i]=255
             }
@@ -89,16 +90,18 @@ class CarModel: NSObject {
         //print("carstop")
     }
     
-    private func setSpeed(){
+    fileprivate func setSpeed(){
         //print("setting speed")
         
         let toBeSentString = ("^{dir:\(dir),mA:\(MASpeed),mB:\(MBSpeed),mC:\(MCSpeed),mD:\(MDSpeed)}^");
-        connection.sendData(toBeSentString)
+//        let toBeSentString = ("Helloword");
+
+        connection.sendData(toBeSentString as NSString)
         delegate?.carDidSetSpeed()
     }
 }
 protocol CarModelDelegate{
-    func carDirectionDidChange(currentDirection:drivingDirection)
+    func carDirectionDidChange(_ currentDirection:drivingDirection)
     func carDidSetSpeed()
 }
 

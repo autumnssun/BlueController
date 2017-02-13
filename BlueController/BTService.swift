@@ -39,7 +39,7 @@ class BTService: NSObject, CBPeripheralDelegate {
     }
     
     // Mark: - CBPeripheralDelegate
-    func peripheral(peripheral: CBPeripheral, didDiscoverServices error: NSError?) {
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         let uuidsForBTService: [CBUUID] = [BLESCharacterUUID]
         
         print("did discover device ")
@@ -59,20 +59,20 @@ class BTService: NSObject, CBPeripheralDelegate {
         
         for service in peripheral.services! {
             print(service)
-            if service.UUID == BLEServiceUUID {
+            if service.uuid == BLEServiceUUID {
                 print("service of found device and wanting server match")
                 print("Start discovering the characteristic of the service")
-                peripheral.discoverCharacteristics(uuidsForBTService, forService: service)
+                peripheral.discoverCharacteristics(uuidsForBTService, for: service)
                 
             }
         }
     }
     
     // Get data values when they are updated
-    func peripheral(peripheral: CBPeripheral, didUpdateValueForCharacteristic characteristic: CBCharacteristic, error: NSError?) {
+    func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         print(":characteristic update")
         if let characteristicValue = characteristic.value{
-            let datastring = NSString(data: characteristicValue, encoding: NSUTF8StringEncoding)
+            let datastring = NSString(data: characteristicValue, encoding: String.Encoding.utf8.rawValue)
             if let datastring = datastring{
                 self.sendBTServiceNotificationWithIsBluetoothConnected(true)
                 print(datastring)
@@ -82,12 +82,12 @@ class BTService: NSObject, CBPeripheralDelegate {
     }
     
     
-    func peripheral(peripheral: CBPeripheral, didDiscoverCharacteristicsForService service: CBService, error: NSError?) {
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         if let characteristics = service.characteristics {
             for characteristic in characteristics {
-                if characteristic.UUID == BLESCharacterUUID {
+                if characteristic.uuid == BLESCharacterUUID {
                     self.UARTCharateristic = (characteristic)
-                    peripheral.setNotifyValue(true, forCharacteristic: characteristic)
+                    peripheral.setNotifyValue(true, for: characteristic)
                     // Send notification that Bluetooth is connected and all required characteristics are discovered
                     self.sendBTServiceNotificationWithIsBluetoothConnected(true)
                     
@@ -97,14 +97,33 @@ class BTService: NSObject, CBPeripheralDelegate {
     }
     
     // Mark: - Private
-    func sendData(str:NSString){
-        let data = str.dataUsingEncoding(NSUTF8StringEncoding)
-        peripheral?.writeValue(data!, forCharacteristic: UARTCharateristic!, type: CBCharacteristicWriteType.WithoutResponse)
+    func sendData(_ str:NSString){
+        let data = str.data(using: String.Encoding.ascii.rawValue)
+        print("data to be sent \(data?.base64EncodedString())")
+        peripheral?.writeValue(data!, for: UARTCharateristic!, type: CBCharacteristicWriteType.withoutResponse)
     }
     
-    func sendBTServiceNotificationWithIsBluetoothConnected(isBluetoothConnected: Bool) {
+    
+    func sendBytes(_ bytes:[UInt8]!){
+        if( bytes == nil){
+            let byte:[UInt8] = [ 0x52, 0x13, 0x00, 0x56, 0xFF, 0x00, 0x00, 0x00, 0xAA ]
+            var data = Data(bytes:byte)
+            print(data)
+            peripheral?.writeValue(data, for: UARTCharateristic!, type: CBCharacteristicWriteType.withResponse)
+
+        }else{
+            var data = Data(bytes:bytes)
+            print(data)
+
+            peripheral?.writeValue(data, for: UARTCharateristic!, type: CBCharacteristicWriteType.withResponse)
+
+        }
+    }
+    
+    
+    func sendBTServiceNotificationWithIsBluetoothConnected(_ isBluetoothConnected: Bool) {
         let connectionDetails = ["isConnected": isBluetoothConnected]
-        NSNotificationCenter.defaultCenter().postNotificationName(BLEServiceChangedStatusNotification, object: self, userInfo: connectionDetails)
+        NotificationCenter.default.post(name: Notification.Name(rawValue: BLEServiceChangedStatusNotification), object: self, userInfo: connectionDetails)
     }
     
 }

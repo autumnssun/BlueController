@@ -10,10 +10,10 @@ import UIKit
 import CoreMotion
 class ViewController: UIViewController{
     
-    var deviceUpdateInter:NSTimeInterval=0.2
+    var deviceUpdateInter:TimeInterval=0.2
     
     var underFinger:UITouch?
-    var timer:NSTimer?
+    var timer:Timer?
     
     var motionManager = CMMotionManager()
     
@@ -23,7 +23,6 @@ class ViewController: UIViewController{
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: Selector("connectionChanged:"), name: BLEServiceChangedStatusNotification, object: nil)
         motionManager.deviceMotionUpdateInterval=deviceUpdateInter
     }
     
@@ -31,7 +30,7 @@ class ViewController: UIViewController{
         super.didReceiveMemoryWarning()
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let touch = touches.first {
             underFinger=touch
             if(underFinger!.view==forwardArea){
@@ -42,11 +41,11 @@ class ViewController: UIViewController{
             }
             if(underFinger!.view == forwardArea || underFinger!.view == backwardArea ){
                 
-                motionManager.startDeviceMotionUpdatesToQueue(NSOperationQueue.mainQueue(), withHandler: { (data, eror) -> Void in
+                motionManager.startDeviceMotionUpdates(to: OperationQueue.main, withHandler: { (data, eror) -> Void in
                     let motion = data! as CMDeviceMotion
                     let rotation = -atan2(motion.gravity.y, motion.gravity.x) + M_PI
                     
-                    self.imageView.transform = CGAffineTransformMakeRotation(CGFloat(-rotation))
+                    self.imageView.transform = CGAffineTransform(rotationAngle: CGFloat(-rotation))
                     car.setRotation(rotation)
                 })
                 
@@ -56,33 +55,15 @@ class ViewController: UIViewController{
         //super.touchesBegan(touches, withEvent:event)
     }
     
-    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         //timer?.invalidate()
         motionManager.stopDeviceMotionUpdates()
         car.stop()
-        self.imageView.transform = CGAffineTransformMakeRotation(CGFloat(0))
+        self.imageView.transform = CGAffineTransform(rotationAngle: CGFloat(0))
         
     }
     
-    func connectionChanged(notification: NSNotification) {
-        // Connection status changed. Indicate on GUI.
-        let userInfo = notification.userInfo as! [String: Bool]
-        NSNotificationCenter.defaultCenter().removeObserver(self)
-        dispatch_async(dispatch_get_main_queue(), {
-            bluetoothConnected=userInfo["isConnected"]!
-            if bluetoothConnected {
-                return
-            } else {
-                // disable the car
-                // send back to into view
-                
-                car.stop()
-                car=nil
-                self.performSegueWithIdentifier("backToSearching", sender: self)
-            }
-        });
-    }
-    
+      
     
     
 }

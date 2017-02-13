@@ -6,6 +6,7 @@
 //  Copyright © 2016 Tran Khoa. All rights reserved.
 //
 //Set up some global variable
+import UIKit
 var bluetoothConnected:Bool=false
 var car:CarModel!
 class IntroScreen: UIViewController {
@@ -17,7 +18,7 @@ class IntroScreen: UIViewController {
     }
     
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         //triger bluetooth searching
         print("Searching for bluetooth");
         btDiscoverySharedInstance
@@ -28,7 +29,7 @@ class IntroScreen: UIViewController {
         // to the model, a notification will be sent out
         // here we listen for that notifications and triger
         // the connectionChanged() function
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: Selector("connectionChanged:"), name: BLEServiceChangedStatusNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(IntroScreen.connectionChanged(_:)), name: NSNotification.Name(rawValue: BLEServiceChangedStatusNotification), object: nil)
     }
     
     override func didReceiveMemoryWarning() {
@@ -36,11 +37,11 @@ class IntroScreen: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    func connectionChanged(notification: NSNotification) {
+    func connectionChanged(_ notification: Notification) {
         // Connection status changed. Indicate on GUI.
         let userInfo = notification.userInfo as! [String: Bool]
-        NSNotificationCenter.defaultCenter().removeObserver(self)
-        dispatch_async(dispatch_get_main_queue(), {
+        NotificationCenter.default.removeObserver(self)
+        DispatchQueue.main.async(execute: {
             bluetoothConnected=userInfo["isConnected"]!
             if let isConnected: Bool = userInfo["isConnected"] {
                 if isConnected {
@@ -48,13 +49,13 @@ class IntroScreen: UIViewController {
                     car=CarModel(con: btDiscoverySharedInstance.bleService!);
                     
                     //after the car connected 
-                self.performSegueWithIdentifier("gotoController", sender: self)
+                self.performSegue(withIdentifier: "gotoController", sender: self)
 
                     
                 } else {
                     //disable the car
                     car=nil
-                    NSNotificationCenter.defaultCenter().addObserver(self, selector: Selector("connectionChanged:"), name: BLEServiceChangedStatusNotification, object: nil)
+                    NotificationCenter.default.addObserver(self, selector: #selector(IntroScreen.connectionChanged(_:)), name: NSNotification.Name(rawValue: BLEServiceChangedStatusNotification), object: nil)
 
                 }
             }
